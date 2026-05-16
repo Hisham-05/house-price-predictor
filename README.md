@@ -18,6 +18,15 @@ A complete end-to-end machine learning and deployment project that predicts hous
 🔗 Streamlit App:  
 https://xgboost-house-price-predictor.streamlit.app
 
+### Input Form
+![App Form](plots/app_form.png)
+
+### Prediction Output
+![Prediction Output](plots/app_prediction.png)
+
+### SHAP Explanation
+![SHAP Waterfall](plots/app_shap.png)
+
 ## 📑 Table of Contents
 
 - [Project Overview](#-project-overview)
@@ -214,11 +223,9 @@ Three models were trained and compared:
 
 ```python
 param_grid = {
-    'model__n_estimators': [100, 200, 300],
-    'model__max_depth': [3, 4, 5],
-    'model__learning_rate': [0.05, 0.1, 0.2],
-    'model__subsample': [0.8, 1.0],
-    'model__colsample_bytree': [0.8, 1.0]
+    'model__n_estimators': [100, 200],
+    'model__max_depth': [3, 5, 7],
+    'model__learning_rate': [0.05, 0.1]
 }
 ```
 
@@ -291,6 +298,56 @@ Explains a single prediction in full detail — starts from the model's base val
 ## 🖼️ Visualizations
 
 All plots are saved to the `plots/` directory after running `house_price.py`.
+
+### SalePrice Distribution (After Log Transformation)
+Confirms that log1p makes the target distribution approximately normal — reducing the influence of expensive outlier houses on training.
+
+![SalePrice Distribution](plots/Distribution_of_SalePrice_after_Log_Transformation.png)
+
+---
+
+### Correlation Heat Map
+Pearson correlations between all numerical features. Shows which features are most linearly related to SalePrice — useful for understanding raw feature relevance before modeling.
+
+![Correlation Heatmap](plots/Correlation_Heat_Map.png)
+
+---
+
+### Actual vs Predicted Prices
+Scatter plot of predicted vs actual sale prices on the holdout set. Points hugging the red diagonal line indicate accurate predictions. Scatter above the line = underestimated. Scatter below = overestimated.
+
+![Actual vs Predicted](plots/Actual_vs_Predicted_Prices(XGBoost).png)
+
+---
+
+### Residual Analysis
+Three-panel diagnostic plot showing where and how the model fails:
+- **Left** — Actual vs Predicted (overall accuracy)
+- **Middle** — Residuals vs Predicted (checks for systematic bias — should be random scatter around zero)
+- **Right** — Residual Distribution (should be a bell curve centred at zero)
+
+![Residual Analysis](plots/residual_analysis.png)
+
+---
+
+### SHAP Global Feature Importance
+Bar chart showing mean absolute SHAP value per feature across all holdout predictions. Bar length = how much that feature moves predictions on average, regardless of direction.
+
+![SHAP Global](plots/shap_global.png)
+
+---
+
+### SHAP Dot Plot
+Each dot is one house. Position on the x-axis shows how much that feature pushed the prediction up or down. Colour shows the feature value — red = high, blue = low. Validates that the model learned sensible real-world relationships (e.g. high TotalSF → higher price).
+
+![SHAP Dot Plot](plots/shap_dot.png)
+
+---
+
+### SHAP Individual Prediction (Waterfall)
+Explains a single prediction in full detail. Starts from the model's base value (average predicted price) and shows exactly how each feature pushed the prediction up or down to reach the final output.
+
+![SHAP Individual](plots/shap_individual.png)
 
 | Plot | Description |
 |---|---|
