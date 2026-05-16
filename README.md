@@ -7,11 +7,16 @@
 ![Kaggle](https://img.shields.io/badge/Kaggle-Score%200.134-blue?style=flat-square&logo=kaggle)
 ![Status](https://img.shields.io/badge/Status-Completed-brightgreen?style=flat-square)
 
-A complete end-to-end machine learning pipeline that predicts house sale prices using the [Kaggle House Prices: Advanced Regression Techniques](https://www.kaggle.com/competitions/house-prices-advanced-regression-techniques) dataset. The project covers everything from raw data ingestion to production-style inference — with a strong emphasis on clean preprocessing pipelines, domain-informed feature engineering, rigorous model evaluation, hyperparameter tuning, and SHAP-based explainability.
+A complete end-to-end machine learning and deployment project that predicts house sale prices using the [Kaggle House Prices: Advanced Regression Techniques](https://www.kaggle.com/competitions/house-prices-advanced-regression-techniques) dataset. The project covers everything from raw data ingestion to deployment-oriented inference — with a strong emphasis on clean preprocessing pipelines, domain-informed feature engineering, rigorous model evaluation, hyperparameter tuning, and SHAP-based explainability.
 
 > **Kaggle score improved from 0.155 → 0.134** using an optimized XGBoost model with a full sklearn Pipeline.
 
 ---
+
+## 🚀 Live Demo
+
+🔗 Streamlit App:  
+https://xgboost-house-price-predictor.streamlit.app
 
 ## 📑 Table of Contents
 
@@ -72,8 +77,8 @@ house-price-predictor/
 │   ├── shap_dot.png
 │   └── shap_individual.png
 │
-├── house_price.py                 # Main training script
-├── app.py                         # Inference / prediction app
+├── house_price.py                 # Model training & evaluation pipeline
+├── app.py                         # Streamlit deployment app with SHAP explanations
 ├── submission.csv                 # Kaggle submission file
 ├── requirements.txt
 └── README.md
@@ -133,7 +138,7 @@ Raw housing data is messy — multiple columns have missing values, the target i
 
 **Target transformation**
 
-`SalePrice` has a strong right skew (a few very expensive homes pull the distribution). Applying `log1p` makes it approximately normal, which is important for regression models that assume residual normality and helps reduce the influence of outliers.
+`SalePrice` has a strong right skew (a few very expensive homes pull the distribution). Applying `log1p` makes the target distribution more symmetric, helps stabilize variance, reduces the influence of outliers, and can improve learning behavior for many regression models.
 
 ```python
 df['SalePrice'] = np.log1p(df['SalePrice'])
@@ -334,7 +339,6 @@ All plots are saved to the `plots/` directory after running `house_price.py`.
 - **Additional feature engineering** — price per square foot, neighbourhood average age, interaction terms between quality and size
 - **Model ensembling** — stacking XGBoost and Random Forest predictions with a meta-learner (Ridge regression) for further accuracy gains
 - **Optuna for hyperparameter search** — replace grid search with Bayesian optimization for a more efficient and thorough search
-- **Streamlit web app** — interactive UI where a user can input house details and get a predicted sale price with a SHAP explanation
 
 ---
 
@@ -347,4 +351,4 @@ All plots are saved to the `plots/` directory after running `house_price.py`.
 
 ---
 
-*Built by [Hisham](https://github.com/Hisham-05)*
+*Built and deployed by [Hisham](https://github.com/Hisham-05)*
