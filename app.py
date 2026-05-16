@@ -70,6 +70,39 @@ def engineer_features(df):
 
 # Header
 st.title("🏠 House Price Predictor")
+with st.sidebar:
+    st.header("About")
+
+    st.write("""
+    This application predicts house prices using an optimized XGBoost regression model.
+
+    Features:
+    - sklearn Pipeline
+    - Feature Engineering
+    - Cross Validation
+    - SHAP Explainability
+    - Streamlit Deployment
+    """)
+
+    st.divider()
+
+    st.subheader("Model")
+    st.write("XGBoost Regressor")
+
+    st.subheader("Tech Stack")
+    st.write("""
+    Python  
+    scikit-learn  
+    XGBoost  
+    SHAP  
+    Streamlit
+    """)
+
+    st.divider()
+
+    st.markdown(
+        "[GitHub Repository](https://github.com/Hisham-05/house-price-predictor)"
+    )
 st.markdown(
     "Enter the details of a house below to get an "
     "estimated price and understand what's driving it."
@@ -101,7 +134,7 @@ with col2:
 with col3:
     st.subheader("Age & Location")
     year_built = st.number_input("Year Built", min_value=1800, max_value=2025, value=2000)
-    year_remod = st.number_input("Year Remodelled", min_value=1800, max_value=2025, value=2000)
+    year_remod = st.number_input("Year Remodeled", min_value=1800, max_value=2025, value=2000)
     yr_sold = st.number_input("Year Sold", min_value=2006, max_value=2025, value=2010)
     ms_zoning = st.selectbox("Zoning", ["RL", "RM", "FV", "RH", "C (all)"])
     neighborhood = st.selectbox("Neighbourhood", [
@@ -119,127 +152,128 @@ st.divider()
 
 # Prediction Button
 if st.button("Predict Price", type="primary", use_container_width=True):
+    with st.spinner("Predicting house price..."):
+        # Validation
+        errors = []
+        if yr_sold < year_built:
+            errors.append("Year sold cannot be before year built.")
+        if year_remod < year_built:
+            errors.append("Year remodeled cannot be before year built.")
+        if gr_liv_area < first_flr_sf:
+            errors.append("Total living area cannot be less than first floor area.")
 
-    # Validation
-    errors = []
-    if yr_sold < year_built:
-        errors.append("Year sold cannot be before year built.")
-    if year_remod < year_built:
-        errors.append("Year remodelled cannot be before year built.")
-    if gr_liv_area < first_flr_sf:
-        errors.append("Total living area cannot be less than first floor area.")
+        if errors:
+            for error in errors:
+                st.error(f"⚠️ {error}")
+            st.stop()
 
-    if errors:
-        for error in errors:
-            st.error(f"⚠️ {error}")
-        st.stop()
+    # Input Dictionary
 
-# Input Dictionary
+        input_data = {
+            'MSSubClass':    60,
+            'MSZoning':      ms_zoning,
+            'LotArea':       lot_area,
+            'LotShape':      'Reg',
+            'LandContour':   'Lvl',
+            'Neighborhood':  neighborhood,
+            'HouseStyle':    house_style,
+            'OverallQual':   overall_qual,
+            'OverallCond':   overall_cond,
+            'YearBuilt':     year_built,
+            'YearRemodAdd':  year_remod,
+            'TotalBsmtSF':   float(total_bsmt_sf),
+            '1stFlrSF':      first_flr_sf,
+            '2ndFlrSF':      second_flr_sf,
+            'GrLivArea':     gr_liv_area,
+            'FullBath':      full_bath,
+            'HalfBath':      half_bath,
+            'BsmtFullBath':  0.0,
+            'BsmtHalfBath':  0.0,
+            'BedroomAbvGr':  bedroom,
+            'KitchenAbvGr':  kitchen,
+            'TotRmsAbvGrd':  bedroom + kitchen + 1,
+            'GarageArea':    float(garage_area),
+            'OpenPorchSF':   0,
+            'EnclosedPorch': 0,
+            '3SsnPorch':     0,
+            'ScreenPorch':   0,
+            'YrSold':        yr_sold,
+            'MoSold':        6,
+    }
 
-    input_data = {
-        'MSSubClass':    60,
-        'MSZoning':      ms_zoning,
-        'LotArea':       lot_area,
-        'LotShape':      'Reg',
-        'LandContour':   'Lvl',
-        'Neighborhood':  neighborhood,
-        'HouseStyle':    house_style,
-        'OverallQual':   overall_qual,
-        'OverallCond':   overall_cond,
-        'YearBuilt':     year_built,
-        'YearRemodAdd':  year_remod,
-        'TotalBsmtSF':   float(total_bsmt_sf),
-        '1stFlrSF':      first_flr_sf,
-        '2ndFlrSF':      second_flr_sf,
-        'GrLivArea':     gr_liv_area,
-        'FullBath':      full_bath,
-        'HalfBath':      half_bath,
-        'BsmtFullBath':  0.0,
-        'BsmtHalfBath':  0.0,
-        'BedroomAbvGr':  bedroom,
-        'KitchenAbvGr':  kitchen,
-        'TotRmsAbvGrd':  bedroom + kitchen + 1,
-        'GarageArea':    float(garage_area),
-        'OpenPorchSF':   0,
-        'EnclosedPorch': 0,
-        '3SsnPorch':     0,
-        'ScreenPorch':   0,
-        'YrSold':        yr_sold,
-        'MoSold':        6,
-}
+    # Predict
 
-# Predict
+        try:
+            # Convert user input into DataFrame for pipeline inference
+            input_df = pd.DataFrame([input_data])
 
-    try:
-        # Convert dictionary to Dataframe for a pipeline
-        input_df = pd.DataFrame([input_data])
+            # # Align input schema with training features
+            input_df = input_df.reindex(columns=feature_columns, fill_value=np.nan)
+            # Feature engineering
+            input_engineer = engineer_features(input_df)
 
-        # Reindex input_df
-        input_df = input_df.reindex(columns=feature_columns, fill_value=np.nan)
-        # Feature engineering
-        input_engineer = engineer_features(input_df)
+            # Pipeline preprocesses and predict in one line
+            log_pred = pipeline.predict(input_engineer)[0] # [0] because the result is an array with one value
 
-        # Pipeline preprocesses and predict in one line
-        log_pred = pipeline.predict(input_engineer)[0] # [0] because the result is an array with one value
+            # Convert log scale back to dollars
+            price = np.expm1(log_pred)
 
-        # Convert log scale back to dollars
-        price = np.expm1(log_pred)
+            # Display Prediction
+            st.success(f"### Estimated Price: ${price:,.0f}")
+            # average error of 10%
+            margin = price * 0.10
+            st.info(f"Estimated range: **${price - margin:,.0f} - ${price + margin:,.0f}** _(based on model's typical error margin)_")
 
-        # Display Prediction
-        st.success(f"### Estimated Price: ${price:,.0f}")
-        # average error of 10%
-        margin = price * 0.10
-        st.info(f"Estimated range: **${price - margin:,.0f} - ${price + margin:,.0f}** _(based on model's typical error margin)_")
+            st.divider()
 
-        st.divider()
+            # SHAP
+            preprocessor_step = pipeline.named_steps['preprocessor']
+            xgb_model = pipeline.named_steps['model']
 
-        # SHAP
-        preprocessor_step = pipeline.named_steps['preprocessor']
-        xgb_model = pipeline.named_steps['model']
+            # Transform input into the fitted preprocessor
+            input_transformed = preprocessor_step.transform(input_engineer)
 
-        # Transform input into the fitted preprocessor
-        input_transformed = preprocessor_step.transform(input_engineer)
+            # Rebuild feature name after encoding
+            cat_feature_names = (
+                preprocessor_step
+                .named_transformers_['cat']['encoder']
+                .get_feature_names_out(categorical_col)
+                .tolist()
+            )
+            all_feature_names = numerical_col + cat_feature_names
 
-        # Rebuild feature name after encoding
-        cat_feature_names = (
-            preprocessor_step
-            .named_transformers_['cat']['encoder']
-            .get_feature_names_out(categorical_col)
-            .tolist()
-        )
-        all_feature_names = numerical_col + cat_feature_names
+            # Compute SHAP values for this one house
+            explainer = shap.TreeExplainer(xgb_model)
+            shap_values = explainer.shap_values(input_transformed)
 
-        # Compute SHAP values for this one house
-        explainer = shap.TreeExplainer(xgb_model)
-        shap_values = explainer.shap_values(input_transformed)
+            st.subheader("Prediction Explanation")
+            # Waterfall plot
+            fig, ax = plt.subplots(figsize=(10, 6))
+            shap.waterfall_plot(
+                shap.Explanation(
+                    values = shap_values[0],
+                    base_values = explainer.expected_value,
+                    data = input_transformed[0],
+                    feature_names = all_feature_names
+                ),
+                max_display = 12,
+                show = False
+            )
+            plt.tight_layout()
+            st.pyplot(fig)
+            plt.close()
 
-        # Waterfall plot
-        fig, axes = plt.subplots(figsize=(10,6))
-        shap.waterfall_plot(
-            shap.Explanation(
-                values = shap_values[0],
-                base_values = explainer.expected_value,
-                data = input_transformed[0],
-                feature_names = all_feature_names
-            ),
-            max_display = 12,
-            show = False
-        )
-        plt.tight_layout()
-        st.pyplot(fig)
-        plt.close()
+            st.divider()
+            st.markdown("**How to read this chart:**")
+            st.markdown("- Red bars pushed the price **up**")
+            st.markdown("- Blue bars pushed the price **down**")
+            st.markdown("- The starting point is the average predicted price across all houses in the training data")
 
-        st.divider()
-        st.markdown("**How to read this chart:**")
-        st.markdown("- Red bars pushed the price **up**")
-        st.markdown("- Blue bars pushed the price **down**")
-        st.markdown("- The starting point is the average predicted price across all houses in the training data")
+        except Exception as e:
+            st.error(f"Something went wrong: {str(e)}")
+            st.markdown("Please check your inputs and try again.")
 
-    except Exception as e:
-        st.error(f"Something went wrong: {str(e)}")
-        st.markdown("Please check your inputs and try again.")
-
-    # Footer
-    st.divider()
-    st.markdown("Built with scikit-learn, XGBoost, SHAP & Streamlit · [GitHub](https://github.com/hisham2-art/house-price-prediction)")
+# Footer
+st.divider()
+st.markdown("Built and deployed using Streamlit, XGBoost, sklearn Pipelines, and SHAP · [GitHub](https://github.com/Hisham-05/house-price-predictor)")
 
