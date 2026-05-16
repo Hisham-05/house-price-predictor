@@ -246,46 +246,13 @@ if st.button("Predict Price", type="primary", use_container_width=True):
             explainer = shap.TreeExplainer(xgb_model)
             shap_values = explainer.shap_values(input_transformed)
 
-            # ── CONVERT LOG SCALE TO DOLLARS ─────────────────────────
-            # The model was trained on log1p(SalePrice) so SHAP values
-            # are in log scale by default.
-            # To convert to dollars we use the fact that:
-            #   log_pred = base_value + sum(shap_values)
-            # Converting each component:
-            #   dollar_base    = expm1(base_value)
-            #   dollar_pred    = expm1(log_pred)
-            #   dollar_contrib = dollar_pred - dollar_base (total shift)
-            # We scale each SHAP value proportionally to its share
-            # of the total log contribution so they sum correctly.
-
-            log_base = explainer.expected_value
-            log_total = shap_values[0].sum()
-            log_pred_value = log_base + log_total
-
-
-            dollar_base = np.expm1(log_base)
-            dollar_pred = np.expm1(log_pred_value)
-            total_dollar_shift = dollar_pred - dollar_base
-
-            # Each SHAP value's proportion of the total log shift
-            if abs(log_total) > 1e-10:  # avoid division by zero
-                shap_dollar = shap_values[0] / log_total * total_dollar_shift
-            else:
-                shap_dollar = np.zeros_like(shap_values[0])
-
-            st.subheader("Prediction Explanation")
-            st.markdown(
-                f"Base price (average house): **${dollar_base:,.0f}**  →  "
-                f"Your house: **${dollar_pred:,.0f}**"
-            )
-
             st.subheader("Prediction Explanation")
             # Waterfall plot
             fig, ax = plt.subplots(figsize=(10, 6))
             shap.waterfall_plot(
                 shap.Explanation(
-                    values = shap_dollar,
-                    base_values = dollar_base,
+                    values = shap_values[0],
+                    base_values = explainer.expected_value,
                     data = input_transformed[0],
                     feature_names = all_feature_names
                 ),
