@@ -293,7 +293,6 @@ if st.button("Predict Price", type="primary", use_container_width=True):
                 show = False
             )
             plt.tight_layout()
-            plt.xlabel("Price Contribution ($)")
             st.pyplot(fig)
             plt.close()
 
