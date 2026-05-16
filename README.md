@@ -18,7 +18,7 @@ A complete end-to-end machine learning and deployment project that predicts hous
 🔗 Streamlit App:  
 https://xgboost-house-price-predictor.streamlit.app
 
-### Input Form
+### 📸 Application Interface
 ![App Form](plots/app_form.png)
 
 ### Prediction Output
